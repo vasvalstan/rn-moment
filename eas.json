@@ -9,24 +9,24 @@
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_ENV": "development",
-        "EXPO_PUBLIC_CONVEX_URL": "https://YOUR_DEV_CONVEX_URL.convex.cloud",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YOUR_DEV_CLERK_KEY"
+        "EXPO_PUBLIC_CONVEX_URL": "https://neighborly-hummingbird-123.convex.cloud",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3dlZXBpbmctZ2xpZGVyLTQwLmNsZXJrLmFjY291bnRzLmRldiQ"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
         "EXPO_PUBLIC_ENV": "preview",
-        "EXPO_PUBLIC_CONVEX_URL": "https://YOUR_DEV_CONVEX_URL.convex.cloud",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YOUR_DEV_CLERK_KEY"
+        "EXPO_PUBLIC_CONVEX_URL": "https://neighborly-hummingbird-123.convex.cloud",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3dlZXBpbmctZ2xpZGVyLTQwLmNsZXJrLmFjY291bnRzLmRldiQ"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_CONVEX_URL": "https://YOUR_PROD_CONVEX_URL.convex.cloud",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_YOUR_PROD_CLERK_KEY"
+        "EXPO_PUBLIC_CONVEX_URL": "https://canny-lynx-689.convex.cloud",
+        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3dlZXBpbmctZ2xpZGVyLTQwLmNsZXJrLmFjY291bnRzLmRldiQ"
       }
     }
   },
