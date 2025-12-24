@@ -1,0 +1,8 @@
+name: Create iOS Preview Build
+
+jobs:
+  build_ios:
+    type: build
+    params:
+      platform: ios
+      profile: preview  # Uses preview profile from eas.json (internal distribution)
