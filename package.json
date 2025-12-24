@@ -8,8 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint",
-    "postinstall": "convex dev --once --configure=new"
+    "lint": "expo lint"
   },
   "dependencies": {
     "@clerk/clerk-expo": "^2.19.6",
