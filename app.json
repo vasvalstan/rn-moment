@@ -10,7 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.stanciuvalentin.moment"
+      "bundleIdentifier": "com.stanciuvalentin.moment",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.stanciuvalentin.moment",
