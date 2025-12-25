@@ -198,31 +198,31 @@ export default function MeditationSession() {
     }, [sessionState, targetDuration]);
 
     const handleSessionStart = async () => {
-        console.log("Starting session - Clerk loaded:", isClerkLoaded, "Clerk signed in:", isSignedIn, "Convex auth loading:", isAuthLoading, "Convex authenticated:", isAuthenticated);
+        if (__DEV__) console.log("Starting session - Clerk loaded:", isClerkLoaded, "Clerk signed in:", isSignedIn, "Convex auth loading:", isAuthLoading, "Convex authenticated:", isAuthenticated);
         
         // Wait for Clerk to finish loading
         if (!isClerkLoaded) {
-            console.log("Clerk still loading, waiting...");
+            if (__DEV__) console.log("Clerk still loading, waiting...");
             setTimeout(() => handleSessionStart(), 500);
             return;
         }
         
         // If Clerk says we're signed in but Convex doesn't know yet, try to refresh token
         if (isSignedIn && !isAuthenticated && !isAuthLoading) {
-            console.log("Clerk signed in but Convex not authenticated - trying to get token...");
+            if (__DEV__) console.log("Clerk signed in but Convex not authenticated - trying to get token...");
             try {
                 const token = await getToken({ template: "convex" });
-                console.log("Got Convex token:", token ? "yes" : "no");
+                if (__DEV__) console.log("Got Convex token:", token ? "yes" : "no");
                 // Wait a moment for Convex to sync
                 await new Promise(resolve => setTimeout(resolve, 1000));
             } catch (e) {
-                console.log("Failed to get Convex token:", e);
+                if (__DEV__) console.log("Failed to get Convex token:", e);
             }
         }
         
         // If still loading auth, wait a moment and retry
         if (isAuthLoading) {
-            console.log("Convex auth still loading, waiting...");
+            if (__DEV__) console.log("Convex auth still loading, waiting...");
             setTimeout(() => handleSessionStart(), 500);
             return;
         }
@@ -232,13 +232,13 @@ export default function MeditationSession() {
         if (isAuthenticated) {
             try {
                 const id = await startSession({ targetDuration });
-                console.log("Session started with ID:", id);
+                if (__DEV__) console.log("Session started with ID:", id);
                 setSessionId(id);
             } catch (error: any) {
-                console.log("Failed to save to Convex, continuing locally:", error.message);
+                if (__DEV__) console.log("Failed to save to Convex, continuing locally:", error.message);
             }
         } else {
-            console.log("Running session locally (not authenticated with Convex)");
+            if (__DEV__) console.log("Running session locally (not authenticated with Convex)");
         }
         
         // Always start the session locally - meditation works regardless of auth
@@ -274,13 +274,13 @@ export default function MeditationSession() {
                     actualDuration: elapsedTime,
                     interruptions,
                 });
-                console.log("Session completed and saved to Convex");
+                if (__DEV__) console.log("Session completed and saved to Convex");
             } catch (error) {
-                console.error("Failed to save session completion:", error);
+                if (__DEV__) console.error("Failed to save session completion:", error);
                 // Session still completed locally, just not tracked
             }
         } else {
-            console.log("Session completed locally (not tracked)");
+            if (__DEV__) console.log("Session completed locally (not tracked)");
         }
     }, [sessionId, elapsedTime, interruptions, completeSession, stopListening]);
 
@@ -295,13 +295,13 @@ export default function MeditationSession() {
                     actualDuration: elapsedTime,
                     interruptions,
                 });
-                console.log("Session cancelled and saved to Convex");
+                if (__DEV__) console.log("Session cancelled and saved to Convex");
             } catch (error) {
-                console.error("Failed to save session cancellation:", error);
+                if (__DEV__) console.error("Failed to save session cancellation:", error);
                 // Continue anyway - session is cancelled locally
             }
         } else {
-            console.log("Session cancelled locally (was not tracked)");
+            if (__DEV__) console.log("Session cancelled locally (was not tracked)");
         }
         
         router.back();
@@ -412,8 +412,8 @@ export default function MeditationSession() {
                         </Text>
                     </View>
 
-                    {/* Debug info for sensor */}
-                    {sensorData && (
+                    {/* Debug info for sensor - only in development */}
+                    {__DEV__ && sensorData && (
                         <View className="mt-4 px-4 py-2 bg-white/5 rounded">
                             <Text className="text-[#6B6B6B] text-xs font-mono text-center">
                                 z: {sensorData.z.toFixed(2)} {sensorData.z > 0.7 ? '(face down)' : '(face up)'}
