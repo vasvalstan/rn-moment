@@ -86,16 +86,23 @@ export default function LoginSignup() {
         try {
             const startOAuthFlow = strategy === "oauth_google" ? startGoogleOAuthFlow : startAppleOAuthFlow;
 
-            const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow();
+            const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow({
+                redirectUrl: "moment://oauth-callback",
+            });
 
             if (createdSessionId) {
                 setActive!({ session: createdSessionId });
                 router.replace("/(tabs)");
             } else {
-                // Use signIn or signUp for next steps such as MFA
+                // Handle MFA or additional steps if needed
+                Alert.alert("Info", "Additional verification may be required");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error("OAuth error", err);
+            Alert.alert(
+                "Sign In Failed", 
+                err.errors?.[0]?.message || err.message || "Failed to sign in. Please try again."
+            );
         }
     }, [startGoogleOAuthFlow, startAppleOAuthFlow]);
 
