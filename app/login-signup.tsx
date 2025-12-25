@@ -3,8 +3,8 @@ import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useState, useCallback } from "react";
-import { useSignIn, useSignUp, useOAuth } from "@clerk/clerk-expo";
+import { useState, useCallback, useEffect } from "react";
+import { useSignIn, useSignUp, useOAuth, useAuth } from "@clerk/clerk-expo";
 import { useWarmUpBrowser } from "../components/useWarmUpBrowser";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
@@ -15,12 +15,20 @@ WebBrowser.maybeCompleteAuthSession();
 export default function LoginSignup() {
     useWarmUpBrowser();
     const router = useRouter();
+    const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
     const { signIn, setActive: setSignInActive, isLoaded: isSignInLoaded } = useSignIn();
     const { signUp, setActive: setSignUpActive, isLoaded: isSignUpLoaded } = useSignUp();
     const insets = useSafeAreaInsets();
 
     const { startOAuthFlow: startGoogleOAuthFlow } = useOAuth({ strategy: "oauth_google" });
     const { startOAuthFlow: startAppleOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
+
+    // If already signed in, redirect to tabs
+    useEffect(() => {
+        if (isAuthLoaded && isSignedIn) {
+            router.replace("/(tabs)");
+        }
+    }, [isAuthLoaded, isSignedIn, router]);
 
     const [isLogin, setIsLogin] = useState(true);
     const [email, setEmail] = useState("");
@@ -29,6 +37,12 @@ export default function LoginSignup() {
     const [code, setCode] = useState("");
 
     const onSignInPress = async () => {
+        // Check if already signed in
+        if (isSignedIn) {
+            router.replace("/(tabs)");
+            return;
+        }
+        
         if (!isSignInLoaded) {
             Alert.alert("Loading", "Please wait while we connect to our servers...");
             return;
@@ -45,11 +59,25 @@ export default function LoginSignup() {
             await setSignInActive({ session: completeSignIn.createdSessionId });
             router.replace("/(tabs)");
         } catch (err: any) {
-            Alert.alert("Error", err.errors?.[0]?.message || "Failed to sign in. Please try again.");
+            const errorMessage = err.errors?.[0]?.message || err.message || "";
+            
+            // Handle "session already exists" - means we're logged in
+            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
+                router.replace("/(tabs)");
+                return;
+            }
+            
+            Alert.alert("Error", errorMessage || "Failed to sign in. Please try again.");
         }
     };
 
     const onSignUpPress = async () => {
+        // Check if already signed in
+        if (isSignedIn) {
+            router.replace("/(tabs)");
+            return;
+        }
+        
         if (!isSignUpLoaded) {
             Alert.alert("Loading", "Please wait while we connect to our servers...");
             return;
@@ -66,7 +94,15 @@ export default function LoginSignup() {
             await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
             setPendingVerification(true);
         } catch (err: any) {
-            Alert.alert("Error", err.errors?.[0]?.message || "Failed to sign up. Please try again.");
+            const errorMessage = err.errors?.[0]?.message || err.message || "";
+            
+            // Handle "session already exists" - means we're logged in
+            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
+                router.replace("/(tabs)");
+                return;
+            }
+            
+            Alert.alert("Error", errorMessage || "Failed to sign up. Please try again.");
         }
     };
 
@@ -79,36 +115,62 @@ export default function LoginSignup() {
             await setSignUpActive({ session: completeSignUp.createdSessionId });
             router.replace("/(tabs)");
         } catch (err: any) {
-            Alert.alert("Error", err.errors[0].message);
+            const errorMessage = err.errors?.[0]?.message || err.message || "";
+            
+            // Handle "session already exists" - means we're logged in
+            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
+                router.replace("/(tabs)");
+                return;
+            }
+            
+            Alert.alert("Error", errorMessage || "Failed to verify. Please try again.");
         }
     };
 
     const onSelectOAuth = useCallback(async (strategy: "oauth_google" | "oauth_apple") => {
         try {
+            // Check if already signed in
+            if (isSignedIn) {
+                router.replace("/(tabs)");
+                return;
+            }
+
             const startOAuthFlow = strategy === "oauth_google" ? startGoogleOAuthFlow : startAppleOAuthFlow;
 
             // Create the redirect URL using Expo Linking
             const redirectUrl = Linking.createURL("/oauth-callback");
             
-            const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow({
+            const { createdSessionId, setActive, signUp: _signUp, signIn: _signIn } = await startOAuthFlow({
                 redirectUrl,
             });
 
             if (createdSessionId) {
-                setActive!({ session: createdSessionId });
+                await setActive!({ session: createdSessionId });
                 router.replace("/(tabs)");
             } else {
-                // Handle MFA or additional steps if needed
-                Alert.alert("Info", "Additional verification may be required");
+                // Check if user got signed in during the flow
+                // This can happen if session already exists
+                if (isSignedIn) {
+                    router.replace("/(tabs)");
+                }
             }
         } catch (err: any) {
-            console.error("OAuth error", err);
+            if (__DEV__) console.error("OAuth error", err);
+            
+            // Handle "session already exists" - this means auth actually succeeded
+            const errorMessage = err.errors?.[0]?.message || err.message || "";
+            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
+                // Session exists means we're actually logged in - redirect
+                router.replace("/(tabs)");
+                return;
+            }
+            
             Alert.alert(
                 "Sign In Failed", 
-                err.errors?.[0]?.message || err.message || "Failed to sign in. Please try again."
+                errorMessage || "Failed to sign in. Please try again."
             );
         }
-    }, [startGoogleOAuthFlow, startAppleOAuthFlow]);
+    }, [startGoogleOAuthFlow, startAppleOAuthFlow, isSignedIn, router]);
 
     return (
         <View className="relative flex-1 w-full bg-[#121212] flex flex-col overflow-hidden">
