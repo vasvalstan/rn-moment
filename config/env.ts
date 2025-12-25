@@ -27,8 +27,8 @@ export const ENV = {
 export const CLERK_DOMAINS = {
   development: 'https://sweeping-glider-40.clerk.accounts.dev',
   preview: 'https://sweeping-glider-40.clerk.accounts.dev',
-  // Replace with your production Clerk domain when you create it
-  production: 'https://YOUR_PROD_CLERK_DOMAIN.clerk.accounts.dev',
+  // Production Clerk domain (stillmoment.dev)
+  production: 'https://clerk.stillmoment.dev',
 };
 
 export function getClerkDomain(): string {
