@@ -28,7 +28,14 @@ export default function LoginSignup() {
     const [code, setCode] = useState("");
 
     const onSignInPress = async () => {
-        if (!isSignInLoaded) return;
+        if (!isSignInLoaded) {
+            Alert.alert("Loading", "Please wait while we connect to our servers...");
+            return;
+        }
+        if (!email || !password) {
+            Alert.alert("Error", "Please enter your email and password");
+            return;
+        }
         try {
             const completeSignIn = await signIn.create({
                 identifier: email,
@@ -37,12 +44,19 @@ export default function LoginSignup() {
             await setSignInActive({ session: completeSignIn.createdSessionId });
             router.replace("/(tabs)");
         } catch (err: any) {
-            Alert.alert("Error", err.errors[0].message);
+            Alert.alert("Error", err.errors?.[0]?.message || "Failed to sign in. Please try again.");
         }
     };
 
     const onSignUpPress = async () => {
-        if (!isSignUpLoaded) return;
+        if (!isSignUpLoaded) {
+            Alert.alert("Loading", "Please wait while we connect to our servers...");
+            return;
+        }
+        if (!email || !password) {
+            Alert.alert("Error", "Please enter your email and password");
+            return;
+        }
         try {
             await signUp.create({
                 emailAddress: email,
@@ -51,7 +65,7 @@ export default function LoginSignup() {
             await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
             setPendingVerification(true);
         } catch (err: any) {
-            Alert.alert("Error", err.errors[0].message);
+            Alert.alert("Error", err.errors?.[0]?.message || "Failed to sign up. Please try again.");
         }
     };
 

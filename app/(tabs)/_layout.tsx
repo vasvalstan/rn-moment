@@ -1,7 +1,25 @@
-import { Tabs } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { useAuth } from "@clerk/clerk-expo";
+import { View, ActivityIndicator } from "react-native";
 
 export default function TabLayout() {
+    const { isSignedIn, isLoaded } = useAuth();
+
+    // Show loading while Clerk is initializing
+    if (!isLoaded) {
+        return (
+            <View className="flex-1 bg-[#121212] items-center justify-center">
+                <ActivityIndicator size="large" color="#C9A961" />
+            </View>
+        );
+    }
+
+    // Redirect to login if not authenticated
+    if (!isSignedIn) {
+        return <Redirect href="/login-signup" />;
+    }
+
     return (
         <Tabs
             screenOptions={{
