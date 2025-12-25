@@ -7,6 +7,7 @@ import { useState, useCallback } from "react";
 import { useSignIn, useSignUp, useOAuth } from "@clerk/clerk-expo";
 import { useWarmUpBrowser } from "../components/useWarmUpBrowser";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -86,8 +87,11 @@ export default function LoginSignup() {
         try {
             const startOAuthFlow = strategy === "oauth_google" ? startGoogleOAuthFlow : startAppleOAuthFlow;
 
+            // Create the redirect URL using Expo Linking
+            const redirectUrl = Linking.createURL("/oauth-callback");
+            
             const { createdSessionId, setActive, signUp, signIn } = await startOAuthFlow({
-                redirectUrl: "moment://oauth-callback",
+                redirectUrl,
             });
 
             if (createdSessionId) {
