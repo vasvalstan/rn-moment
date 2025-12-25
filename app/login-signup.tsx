@@ -7,9 +7,9 @@ import { useState, useCallback, useEffect } from "react";
 import { useSignIn, useSignUp, useOAuth, useAuth } from "@clerk/clerk-expo";
 import { useWarmUpBrowser } from "../components/useWarmUpBrowser";
 import * as WebBrowser from "expo-web-browser";
-import * as Linking from "expo-linking";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+// Complete any pending auth sessions on web
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginSignup() {
@@ -136,13 +136,9 @@ export default function LoginSignup() {
             }
 
             const startOAuthFlow = strategy === "oauth_google" ? startGoogleOAuthFlow : startAppleOAuthFlow;
-
-            // Create the redirect URL using Expo Linking
-            const redirectUrl = Linking.createURL("/oauth-callback");
             
-            const { createdSessionId, setActive, signUp: _signUp, signIn: _signIn } = await startOAuthFlow({
-                redirectUrl,
-            });
+            // Don't pass redirectUrl - let Clerk handle it automatically
+            const { createdSessionId, setActive, signUp: _signUp, signIn: _signIn } = await startOAuthFlow();
 
             if (createdSessionId) {
                 await setActive!({ session: createdSessionId });
@@ -157,11 +153,21 @@ export default function LoginSignup() {
         } catch (err: any) {
             if (__DEV__) console.error("OAuth error", err);
             
-            // Handle "session already exists" - this means auth actually succeeded
+            // Handle various error cases
             const errorMessage = err.errors?.[0]?.message || err.message || "";
+            
+            // Session exists means we're actually logged in
             if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
-                // Session exists means we're actually logged in - redirect
                 router.replace("/(tabs)");
+                return;
+            }
+            
+            // Redirect mismatch - likely a stale auth session, try again
+            if (errorMessage.toLowerCase().includes("redirect")) {
+                Alert.alert(
+                    "Please Try Again", 
+                    "There was an issue with the sign-in flow. Please try again."
+                );
                 return;
             }
             
