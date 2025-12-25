@@ -42,8 +42,8 @@ app-example
 /ios
 /android
 
-# Convex generated files (keep your functions/schema!)
-convex/_generated/
+# Convex - commit _generated files for EAS builds
+# convex/_generated/  # DO NOT ignore - needed for EAS builds
 
 # EAS
 .easignore
