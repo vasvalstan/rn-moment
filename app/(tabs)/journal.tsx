@@ -21,14 +21,13 @@ export default function Journal() {
                     </Text>
                 </TouchableOpacity>
             </View>
-            <ScrollView className="flex-1 px-6 pt-8 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 32 }}>
+            <ScrollView className="flex-1 px-6 pt-3 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 32 }}>
                 <View className="relative">
                     <View className="absolute left-0 top-12 w-1/2 h-96 overflow-hidden opacity-30 rounded-[2px] pointer-events-none">
                         <Image
                             source={{ uri: "https://images.unsplash.com/photo-1604871000636-074fa5117945?w=800&q=80" }}
                             contentFit="cover"
                             className="w-full h-full grayscale contrast-125 brightness-75 blur-sm"
-                            style={{ mixBlendMode: "screen" }}
                         />
                         <LinearGradient
                             colors={["transparent", "rgba(18,18,18,0.4)", "#121212"]}
@@ -96,7 +95,7 @@ export default function Journal() {
                         </View>
                         <Text className="font-heading text-2xl text-[#ECECEC] mb-3">Gratitude Practice</Text>
                         <Text className="text-sm text-[#8A8A8A] leading-relaxed font-sans">
-                            Three things I'm grateful for: the quiet morning hours, supportive friends, and the
+                            Three things I&apos;m grateful for: the quiet morning hours, supportive friends, and the
                             courage to keep showing up for...
                         </Text>
                     </View>
@@ -128,7 +127,7 @@ export default function Journal() {
                         </View>
                         <Text className="font-heading text-2xl text-[#ECECEC] mb-3">Digital Detox Day</Text>
                         <Text className="text-sm text-[#8A8A8A] leading-relaxed font-sans">
-                            Spending time away from screens revealed how much mental space I've been giving to
+                            Spending time away from screens revealed how much mental space I&apos;ve been giving to
                             notifications. The silence was...
                         </Text>
                     </View>

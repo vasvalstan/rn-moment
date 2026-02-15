@@ -1,10 +1,13 @@
 import { Tabs, Redirect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useAuth } from "@clerk/clerk-expo";
-import { View, ActivityIndicator } from "react-native";
+import { View, ActivityIndicator, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabLayout() {
     const { isSignedIn, isLoaded } = useAuth();
+    const insets = useSafeAreaInsets();
+    const isAndroid = Platform.OS === "android";
 
     // Show loading while Clerk is initializing
     if (!isLoaded) {
@@ -27,8 +30,8 @@ export default function TabLayout() {
                 tabBarStyle: {
                     backgroundColor: "#121212",
                     borderTopColor: "#333333",
-                    height: 80,
-                    paddingBottom: 20,
+                    height: isAndroid ? 60 + insets.bottom : 80,
+                    paddingBottom: isAndroid ? Math.max(insets.bottom, 10) : 20,
                     paddingTop: 10,
                 },
                 tabBarActiveTintColor: "#DBC188",

@@ -24,14 +24,13 @@ export default function Settings() {
                     </Text>
                 </TouchableOpacity>
             </View>
-            <ScrollView className="flex-1 px-6 pt-8 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 40 }}>
+            <ScrollView className="flex-1 px-6 pt-3 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 40 }}>
                 <View className="relative">
                     <View className="absolute right-0 top-0 w-3/4 h-80 overflow-hidden opacity-20 rounded-[4px]">
                         <Image
                             source={{ uri: "https://images.unsplash.com/photo-1604871000636-074fa5117945?w=800&q=80" }}
                             contentFit="cover"
                             className="w-full h-full grayscale contrast-125 brightness-50"
-                            style={{ mixBlendMode: "screen" }}
                         />
                         <LinearGradient
                             colors={["transparent", "rgba(18,18,18,0.3)", "#121212"]}
@@ -46,7 +45,7 @@ export default function Settings() {
                             className="absolute inset-0"
                         />
                     </View>
-                    <View className="relative z-10 pt-6">
+                    <View className="relative z-10 pt-3">
                         <Text className="font-heading text-6xl leading-[1.05] text-[#ECECEC] tracking-tight">
                             Settings
                         </Text>

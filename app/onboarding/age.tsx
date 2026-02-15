@@ -32,7 +32,7 @@ export default function OnboardingAge() {
             <View className="flex-1 flex flex-col relative z-10 px-8 pt-16">
                 <View className="text-center mb-16">
                     <Text className="font-heading text-5xl leading-[1.1] tracking-tight text-[#E8E4DD] text-center">
-                        What's your{"\n"}
+                        What&apos;s your{"\n"}
                         <Text className="text-[#C9A961] italic">age range?</Text>
                     </Text>
                 </View>

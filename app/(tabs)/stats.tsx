@@ -21,14 +21,13 @@ export default function Stats() {
                     </Text>
                 </TouchableOpacity>
             </View>
-            <ScrollView className="flex-1 px-6 pt-8 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 40 }}>
+            <ScrollView className="flex-1 px-6 pt-3 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 40 }}>
                 <View className="relative">
                     <View className="absolute right-0 top-0 w-3/5 h-72 overflow-hidden opacity-30 rounded-[4px]">
                         <Image
                             source={{ uri: "https://images.unsplash.com/photo-1617791160505-6f00504e3519?w=800&q=80" }}
                             contentFit="cover"
                             className="w-full h-full grayscale contrast-125 brightness-75"
-                            style={{ mixBlendMode: "screen" }}
                         />
                         <LinearGradient
                             colors={["transparent", "rgba(18,18,18,0.3)", "#121212"]}
@@ -43,7 +42,7 @@ export default function Stats() {
                             className="absolute inset-0"
                         />
                     </View>
-                    <View className="relative z-10 pt-8">
+                    <View className="relative z-10 pt-4">
                         <Text className="font-heading text-6xl leading-[1.05] text-[#ECECEC] max-w-[75%]">
                             Statistics
                         </Text>

@@ -72,14 +72,13 @@ export default function Home() {
                     </Text>
                 </TouchableOpacity>
             </View>
-            <ScrollView className="flex-1 px-6 pt-8 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 48 }}>
+            <ScrollView className="flex-1 px-6 pt-2 pb-24" contentContainerStyle={{ paddingBottom: 100, gap: 48 }}>
                 <View className="relative">
                     <View className="absolute right-0 top-0 w-2/3 h-64 overflow-hidden opacity-40 rounded-[4px]">
                         <Image
                             source={{ uri: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80" }}
                             contentFit="cover"
                             className="w-full h-full grayscale contrast-125 brightness-75"
-                            style={{ mixBlendMode: "screen" }}
                         />
                         <LinearGradient
                             colors={["transparent", "rgba(18,18,18,0.2)", "#121212"]}
@@ -94,7 +93,7 @@ export default function Home() {
                             className="absolute inset-0"
                         />
                     </View>
-                    <View className="relative z-10 pt-12 pr-12">
+                    <View className="relative z-10 pt-4 pr-12">
                         <Text className="block text-[10px] uppercase tracking-[0.3em] text-[#DBC188] mb-6 pl-1 border-l border-[#DBC188] font-sans">
                             Daily Insight
                         </Text>
