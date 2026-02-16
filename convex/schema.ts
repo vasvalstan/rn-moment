@@ -54,4 +54,21 @@ export default defineSchema({
         ),
         interruptions: v.number(),       // how many times phone was picked up
     }).index("by_user", ["userId"]),
+
+    conversations: defineTable({
+        userId: v.id("users"),
+        date: v.string(),               // ISO date string (YYYY-MM-DD)
+        topic: v.string(),              // The daily reflection topic
+        topicCategory: v.string(),      // Category like "gratitude", "growth", etc.
+    }).index("by_user_date", ["userId", "date"]),
+
+    chatMessages: defineTable({
+        conversationId: v.id("conversations"),
+        role: v.union(
+            v.literal("user"),
+            v.literal("assistant")
+        ),
+        content: v.string(),
+        createdAt: v.number(),          // timestamp
+    }).index("by_conversation", ["conversationId"]),
 });

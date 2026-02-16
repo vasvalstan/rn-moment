@@ -9,6 +9,8 @@ import { useEffect } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { useUser } from "@clerk/clerk-expo";
+import { FadeText } from "@/components/FadeText";
+import { CircularProgress } from "@/components/CircularProgress";
 
 export default function Home() {
     const router = useRouter();
@@ -97,11 +99,21 @@ export default function Home() {
                         <Text className="block text-[10px] uppercase tracking-[0.3em] text-[#DBC188] mb-6 pl-1 border-l border-[#DBC188] font-sans">
                             Daily Insight
                         </Text>
-                        <Text className="font-heading text-5xl leading-[1.1] text-[#ECECEC] max-w-[90%]">
-                            Stillness{"\n"}
-                            <Text className="text-[#8A8A8A] italic font-light">is the key</Text>{"\n"}
-                            to clarity.
-                        </Text>
+                        <FadeText
+                            inputs={["Stillness", "is the key", "to clarity."]}
+                            wordDelay={350}
+                            duration={900}
+                            blurIntensity={[25, 8, 0]}
+                            blurTint="dark"
+                            scaleRange={[0.95, 1]}
+                            translateYRange={[12, 0]}
+                            opacityRange={[0, 0.4, 1]}
+                            fontSize={42}
+                            fontWeight="700"
+                            color="#ECECEC"
+                            textAlign="left"
+                            containerStyle={{ maxWidth: "90%" }}
+                        />
                     </View>
                 </View>
 
@@ -125,20 +137,33 @@ export default function Home() {
                                     {user?.preferences?.sessionLength || 20}<Text className="text-[#333333]">:</Text>00
                                 </Text>
                             </View>
-                            <TouchableOpacity 
+                            <CircularProgress
+                                progress={33}
+                                size={72}
+                                strokeWidth={2.5}
+                                trackColor="rgba(219, 193, 136, 0.1)"
+                                progressColor="#DBC188"
+                                backgroundColor="#1a1a1a"
+                                gap={4}
+                                animated={true}
+                                animationDuration={1400}
                                 onPress={() => {
-                                    // Use user's session length if available, otherwise default to 20 minutes
-                                    const duration = (user?.preferences?.sessionLength || 20) * 60; // Convert to seconds
+                                    const duration = (user?.preferences?.sessionLength || 20) * 60;
                                     console.log("Starting session with duration:", duration);
                                     router.push(`/session?duration=${duration}`);
                                 }}
-                                className="w-16 h-16 border border-[#DBC188]/30 rounded-[2px] flex items-center justify-center active:bg-[#DBC188]/10 active:scale-95"
-                            >
-                                <Ionicons name="play-outline" size={24} color="#DBC188" />
-                            </TouchableOpacity>
+                                renderIcon={() => (
+                                    <Ionicons name="play" size={22} color="#DBC188" style={{ marginLeft: 3 }} />
+                                )}
+                            />
                         </View>
                         <View className="mt-6 w-full h-[1px] bg-[#262626]">
-                            <View className="w-1/3 h-full bg-[#DBC188]" />
+                            <LinearGradient
+                                colors={["#DBC188", "rgba(219, 193, 136, 0.3)", "transparent"]}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 0 }}
+                                style={{ width: "33%", height: "100%" }}
+                            />
                         </View>
                     </View>
                 </View>
