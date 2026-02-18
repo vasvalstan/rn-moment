@@ -15,38 +15,16 @@ import {
 } from "@expo-google-fonts/jetbrains-mono";
 import { useEffect } from "react";
 import * as SplashScreen from "expo-splash-screen";
-import { ConvexReactClient } from "convex/react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
-import * as SecureStore from "expo-secure-store";
+import { ConvexProviderWithAuth, ConvexReactClient } from "convex/react";
 import { StatusBar } from "expo-status-bar";
 import { OnboardingProvider } from "../context/OnboardingContext";
+import { useAppAuth } from "@/lib/use-auth";
 
 SplashScreen.preventAutoHideAsync();
 
 const convex = new ConvexReactClient(process.env.EXPO_PUBLIC_CONVEX_URL!, {
   unsavedChangesWarning: false,
 });
-
-const tokenCache = {
-  async getToken(key: string) {
-    try {
-      return SecureStore.getItemAsync(key);
-    } catch (err) {
-      return null;
-    }
-  },
-  async saveToken(key: string, value: string) {
-    try {
-      return SecureStore.setItemAsync(key, value);
-    } catch (err) {
-      return;
-    }
-  },
-};
-
-// Use environment variable for Clerk key (fallback to dev key for local development)
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || "pk_test_c3dlZXBpbmctZ2xpZGVyLTQwLmNsZXJrLmFjY291bnRzLmRldiQ";
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -67,29 +45,27 @@ export default function RootLayout() {
   }
 
   return (
-    <ClerkProvider publishableKey={publishableKey} tokenCache={tokenCache}>
-      <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
-        <OnboardingProvider>
-          <StatusBar style="light" />
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="onboarding/welcome" />
-            <Stack.Screen name="onboarding/purpose" />
-            <Stack.Screen name="onboarding/age" />
-            <Stack.Screen name="onboarding/experience" />
-            <Stack.Screen name="onboarding/preferences" />
-            <Stack.Screen name="login-signup" />
-            <Stack.Screen name="profile" />
-            <Stack.Screen 
-              name="session" 
-              options={{ 
-                presentation: 'fullScreenModal',
-                animation: 'fade',
-              }} 
-            />
-          </Stack>
-        </OnboardingProvider>
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+    <ConvexProviderWithAuth client={convex} useAuth={useAppAuth}>
+      <OnboardingProvider>
+        <StatusBar style="light" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="onboarding/welcome" />
+          <Stack.Screen name="onboarding/purpose" />
+          <Stack.Screen name="onboarding/age" />
+          <Stack.Screen name="onboarding/experience" />
+          <Stack.Screen name="onboarding/preferences" />
+          <Stack.Screen name="login-signup" />
+          <Stack.Screen name="profile" />
+          <Stack.Screen
+            name="session"
+            options={{
+              presentation: "fullScreenModal",
+              animation: "fade",
+            }}
+          />
+        </Stack>
+      </OnboardingProvider>
+    </ConvexProviderWithAuth>
   );
 }

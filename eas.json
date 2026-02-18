@@ -10,7 +10,8 @@
       "env": {
         "EXPO_PUBLIC_ENV": "development",
         "EXPO_PUBLIC_CONVEX_URL": "https://neighborly-hummingbird-123.convex.cloud",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3dlZXBpbmctZ2xpZGVyLTQwLmNsZXJrLmFjY291bnRzLmRldiQ"
+        "EXPO_PUBLIC_BETTER_AUTH_URL": "http://localhost:3000",
+        "EXPO_PUBLIC_BETTER_AUTH_AUDIENCE": "convex"
       }
     },
     "preview": {
@@ -18,7 +19,8 @@
       "env": {
         "EXPO_PUBLIC_ENV": "preview",
         "EXPO_PUBLIC_CONVEX_URL": "https://neighborly-hummingbird-123.convex.cloud",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_c3dlZXBpbmctZ2xpZGVyLTQwLmNsZXJrLmFjY291bnRzLmRldiQ"
+        "EXPO_PUBLIC_BETTER_AUTH_URL": "https://preview-auth.stillmoment.dev",
+        "EXPO_PUBLIC_BETTER_AUTH_AUDIENCE": "convex"
       }
     },
     "production": {
@@ -26,7 +28,8 @@
       "env": {
         "EXPO_PUBLIC_ENV": "production",
         "EXPO_PUBLIC_CONVEX_URL": "https://canny-lynx-689.convex.cloud",
-        "EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuc3RpbGxtb21lbnQuZGV2JA"
+        "EXPO_PUBLIC_BETTER_AUTH_URL": "https://auth.stillmoment.dev",
+        "EXPO_PUBLIC_BETTER_AUTH_AUDIENCE": "convex"
       }
     }
   },

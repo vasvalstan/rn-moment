@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "expo start",
+    "auth:dev": "node --env-file=auth-server/.env auth-server/server.mjs",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
@@ -11,7 +12,7 @@
     "lint": "expo lint"
   },
   "dependencies": {
-    "@clerk/clerk-expo": "^2.19.6",
+    "@better-auth/expo": "^1.4.18",
     "@expo-google-fonts/dm-serif-display": "^0.4.2",
     "@expo-google-fonts/instrument-sans": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
@@ -21,6 +22,7 @@
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
+    "better-auth": "^1.4.18",
     "clsx": "^2.1.1",
     "convex": "^1.21.0",
     "expo": "~54.0.30",
@@ -33,6 +35,7 @@
     "expo-keep-awake": "~15.0.8",
     "expo-linear-gradient": "~15.0.8",
     "expo-linking": "~8.0.11",
+    "expo-network": "^8.0.8",
     "expo-notifications": "~0.32.15",
     "expo-router": "~6.0.21",
     "expo-secure-store": "~15.0.8",
@@ -44,6 +47,7 @@
     "expo-web-browser": "~15.0.10",
     "nativewind": "^4.2.1",
     "openai": "^6.22.0",
+    "pg": "^8.18.0",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",

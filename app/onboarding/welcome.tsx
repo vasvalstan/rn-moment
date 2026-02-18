@@ -33,11 +33,6 @@ export default function OnboardingWelcome() {
             >
                 {/* Main Content Block */}
                 <View className="w-full items-center">
-                    {/* Step Indicator */}
-                    <Text className="font-mono text-xs tracking-[0.2em] text-[#6B6B6B] mb-8">
-                        01 / 05
-                    </Text>
-
                     {/* Title */}
                     <Text className="font-heading text-5xl leading-[1.1] tracking-tight text-[#E8E4DD] text-center mb-6">
                         Welcome to{"\n"}

@@ -2,8 +2,47 @@ import { View, Text, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle } from "react-native-svg";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+
+const DAY_LABELS = ["M", "T", "W", "T", "F", "S", "S"];
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const EMPTY_WEEK = [0, 0, 0, 0, 0, 0, 0];
+
+const getIsoWeekNumber = (date: Date) => {
+    const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = utcDate.getUTCDay() || 7;
+    utcDate.setUTCDate(utcDate.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1));
+    return Math.ceil((((utcDate.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+};
+
+const formatDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
 
 export default function Stats() {
+    const stats = useQuery(api.stats.getUserStats);
+
+    const isLoading = stats === undefined;
+    const currentStreak = stats?.currentStreak ?? 0;
+    const totalSessions = stats?.totalSessions ?? 0;
+    const totalHours = ((stats?.totalTime ?? 0) / 60).toFixed(1);
+    const averageDuration = Math.round(stats?.averageSessionMinutes ?? 0);
+    const weeklyActivity = stats?.weeklyActivityMondayFirst ?? EMPTY_WEEK;
+    const maxWeeklyMinutes = Math.max(...weeklyActivity, 1);
+    const activeDays = weeklyActivity.filter((minutes) => minutes > 0).length;
+    const completionPercent = Math.round((activeDays / 7) * 100);
+    const completionStrokeOffset = 314 * (1 - completionPercent / 100);
+    const bestDay =
+        stats?.bestDayIndex !== null && stats?.bestDayIndex !== undefined
+            ? DAY_NAMES[stats.bestDayIndex]
+            : "No data yet";
+    const longestSession = formatDuration(stats?.longestSessionSeconds ?? 0);
+    const weekNumber = getIsoWeekNumber(new Date());
+
     return (
         <View className="flex-1 bg-[#121212]">
             <View className="flex-row justify-between items-end px-6 pt-12 pb-4 bg-[#121212]/80 border-b border-white/5">
@@ -12,12 +51,12 @@ export default function Stats() {
                         Your Progress
                     </Text>
                     <Text className="text-sm font-medium tracking-widest text-[#ECECEC] font-sans">
-                        WEEK 42
+                        WEEK {weekNumber}
                     </Text>
                 </View>
                 <TouchableOpacity>
                     <Text className="text-[10px] uppercase tracking-[0.2em] text-[#DBC188] font-sans">
-                        Export
+                        {isLoading ? "Syncing" : "Live"}
                     </Text>
                 </TouchableOpacity>
             </View>
@@ -46,6 +85,11 @@ export default function Stats() {
                         <Text className="font-heading text-6xl leading-[1.05] text-[#ECECEC] max-w-[75%]">
                             Statistics
                         </Text>
+                        {isLoading && (
+                            <Text className="text-[10px] uppercase tracking-[0.22em] text-[#8A8A8A] mt-2 font-sans">
+                                Fetching latest data
+                            </Text>
+                        )}
                     </View>
                 </View>
 
@@ -57,7 +101,7 @@ export default function Stats() {
                                 Current Streak
                             </Text>
                             <Text className="font-sans text-7xl font-light tracking-tighter text-[#ECECEC] mb-2">
-                                47
+                                {currentStreak}
                             </Text>
                             <Text className="text-xs text-[#9CAF88] tracking-wide font-sans">Consecutive Days</Text>
                         </View>
@@ -70,24 +114,26 @@ export default function Stats() {
                                 Weekly Activity
                             </Text>
                             <View className="flex-row items-end justify-between h-40 gap-3">
-                                {[
-                                    { day: "M", height: "h-20" },
-                                    { day: "T", height: "h-16" },
-                                    { day: "W", height: "h-20" },
-                                    { day: "T", height: "h-14" },
-                                    { day: "F", height: "h-24" },
-                                    { day: "S", height: "h-12" },
-                                    { day: "S", height: "h-10", color: "text-[#DBC188]" },
-                                ].map((item, index) => (
-                                    <View key={index} className="flex-1 flex-col justify-end items-center gap-2">
+                                {weeklyActivity.map((minutes, index) => {
+                                    const normalizedHeight = Math.round((minutes / maxWeeklyMinutes) * 96);
+                                    const barHeight = minutes > 0 ? Math.max(8, normalizedHeight) : 4;
+                                    const isBestDay = stats?.bestDayIndex === index && minutes > 0;
+
+                                    return (
+                                        <View key={DAY_NAMES[index]} className="flex-1 flex-col justify-end items-center gap-2">
                                         <View className="w-full bg-[#262626] rounded-t-[2px] h-24 flex-col justify-end">
-                                            <View className={`w-full bg-[#9CAF88] rounded-t-[2px] ${item.height}`} />
+                                            <View className="w-full bg-[#9CAF88] rounded-t-[2px]" style={{ height: barHeight }} />
                                         </View>
-                                        <Text className={`text-[9px] tracking-widest font-sans ${item.color || 'text-[#8A8A8A]'}`}>
-                                            {item.day}
+                                        <Text
+                                            className={`text-[9px] tracking-widest font-sans ${
+                                                isBestDay ? "text-[#DBC188]" : "text-[#8A8A8A]"
+                                            }`}
+                                        >
+                                            {DAY_LABELS[index]}
                                         </Text>
                                     </View>
-                                ))}
+                                    );
+                                })}
                             </View>
                         </View>
                     </View>
@@ -100,7 +146,7 @@ export default function Stats() {
                         </Text>
                         <View className="mt-auto">
                             <Text className="font-sans text-4xl font-light tracking-tight text-[#ECECEC] mb-1">
-                                24.5
+                                {totalHours}
                             </Text>
                             <Text className="text-[10px] text-[#8A8A8A] tracking-widest font-sans">HOURS</Text>
                         </View>
@@ -112,7 +158,7 @@ export default function Stats() {
                         </Text>
                         <View className="mt-auto relative z-10">
                             <Text className="font-sans text-4xl font-light tracking-tight text-[#ECECEC] mb-1">
-                                142
+                                {totalSessions}
                             </Text>
                             <Text className="text-[10px] text-[#8A8A8A] tracking-widest font-sans">COMPLETED</Text>
                         </View>
@@ -138,13 +184,13 @@ export default function Stats() {
                                     stroke="#DBC188"
                                     strokeWidth="8"
                                     strokeDasharray="314"
-                                    strokeDashoffset="47"
+                                    strokeDashoffset={completionStrokeOffset}
                                     strokeLinecap="round"
                                 />
                             </Svg>
                             <View className="absolute inset-0 items-center justify-center flex-col">
                                 <Text className="font-sans text-3xl font-light tracking-tight text-[#ECECEC]">
-                                    85
+                                    {completionPercent}
                                 </Text>
                                 <Text className="text-[9px] text-[#8A8A8A] tracking-widest font-sans">PERCENT</Text>
                             </View>
@@ -170,15 +216,20 @@ export default function Stats() {
                         </Text>
                         <View className="flex-row items-baseline gap-2 mb-1">
                             <Text className="font-sans text-5xl font-light tracking-tight text-[#ECECEC]">
-                                18
+                                {averageDuration}
                             </Text>
                             <Text className="text-xl text-[#8A8A8A] font-light font-sans">min</Text>
                         </View>
                         <View className="flex-row items-center gap-2 mt-4">
                             <View className="flex-1 h-[1px] bg-[#262626]">
-                                <View className="w-3/5 h-full bg-[#9CAF88]" />
+                                <View
+                                    className="h-full bg-[#9CAF88]"
+                                    style={{ width: `${Math.max(completionPercent, 4)}%` }}
+                                />
                             </View>
-                            <Text className="text-[9px] text-[#9CAF88] tracking-widest font-sans">+12% FROM LAST WEEK</Text>
+                            <Text className="text-[9px] text-[#9CAF88] tracking-widest font-sans">
+                                {activeDays}/7 DAYS ACTIVE
+                            </Text>
                         </View>
                     </View>
                 </View>
@@ -190,14 +241,14 @@ export default function Stats() {
                             <Text className="text-[10px] uppercase tracking-[0.25em] text-[#8A8A8A] font-sans">
                                 Best Day
                             </Text>
-                            <Text className="font-heading text-2xl text-[#ECECEC] mt-1">Friday</Text>
+                            <Text className="font-heading text-2xl text-[#ECECEC] mt-1">{bestDay}</Text>
                         </View>
                         <View className="flex-col items-end">
                             <Text className="text-[10px] uppercase tracking-[0.25em] text-[#8A8A8A] font-sans">
                                 Longest Session
                             </Text>
                             <Text className="font-sans text-2xl font-light tracking-tight text-[#ECECEC] mt-1">
-                                45:00
+                                {longestSession}
                             </Text>
                         </View>
                     </View>

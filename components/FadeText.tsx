@@ -77,7 +77,7 @@ const AnimatedWord: React.FC<AnimatedWordProps> = memo(
           easing: Easing.out(Easing.cubic),
         })
       );
-    }, [delay, duration]);
+    }, [delay, duration, animationValue]);
 
     const animatedStyle = useAnimatedStyle(() => {
       const opacity = interpolate(
@@ -143,16 +143,18 @@ const AnimatedWord: React.FC<AnimatedWordProps> = memo(
   }
 );
 
+AnimatedWord.displayName = "AnimatedWord";
+
 export const FadeText: React.FC<FadeTextProps> = memo(
   ({
     inputs,
     wordDelay = 300,
     duration = 800,
-    blurIntensity = [30, 10, 0],
+    blurIntensity = [30, 10, 0] as [number, number, number],
     blurTint = "dark",
-    scaleRange = [0.97, 1],
-    translateYRange = [10, 0],
-    opacityRange = [0, 0.5, 1],
+    scaleRange = [0.97, 1] as [number, number],
+    translateYRange = [10, 0] as [number, number],
+    opacityRange = [0, 0.5, 1] as [number, number, number],
     fontSize = 32,
     fontWeight = "600",
     color = "#ffffff",
@@ -192,6 +194,8 @@ export const FadeText: React.FC<FadeTextProps> = memo(
     );
   }
 );
+
+FadeText.displayName = "FadeText";
 
 const styles = StyleSheet.create({
   container: {

@@ -12,26 +12,14 @@ export const ENV = {
   
   // Convex
   convexUrl: process.env.EXPO_PUBLIC_CONVEX_URL!,
-  
-  // Clerk
-  clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || 
-    'pk_test_c3dlZXBpbmctZ2xpZGVyLTQwLmNsZXJrLmFjY291bnRzLmRldiQ',
+
+  // Better Auth
+  betterAuthUrl: process.env.EXPO_PUBLIC_BETTER_AUTH_URL || "",
+  betterAuthAudience: process.env.EXPO_PUBLIC_BETTER_AUTH_AUDIENCE || "convex",
   
   // Computed values
   isDevelopment: (process.env.EXPO_PUBLIC_ENV || 'development') === 'development',
   isProduction: process.env.EXPO_PUBLIC_ENV === 'production',
   isPreview: process.env.EXPO_PUBLIC_ENV === 'preview',
 };
-
-// Clerk domains per environment (for Convex auth config)
-export const CLERK_DOMAINS = {
-  development: 'https://sweeping-glider-40.clerk.accounts.dev',
-  preview: 'https://sweeping-glider-40.clerk.accounts.dev',
-  // Production Clerk domain (stillmoment.dev)
-  production: 'https://clerk.stillmoment.dev',
-};
-
-export function getClerkDomain(): string {
-  return CLERK_DOMAINS[ENV.environment] || CLERK_DOMAINS.development;
-}
 

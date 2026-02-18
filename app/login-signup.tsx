@@ -4,179 +4,134 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useState, useCallback, useEffect } from "react";
-import { useSignIn, useSignUp, useOAuth, useAuth } from "@clerk/clerk-expo";
-import { useWarmUpBrowser } from "../components/useWarmUpBrowser";
-import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-// Complete any pending auth sessions on web
-WebBrowser.maybeCompleteAuthSession();
+import { signIn, signUp, useSession } from "@/lib/auth-client";
 
 export default function LoginSignup() {
-    useWarmUpBrowser();
     const router = useRouter();
-    const { isSignedIn, isLoaded: isAuthLoaded } = useAuth();
-    const { signIn, setActive: setSignInActive, isLoaded: isSignInLoaded } = useSignIn();
-    const { signUp, setActive: setSignUpActive, isLoaded: isSignUpLoaded } = useSignUp();
+    const { data: session, isPending: isAuthLoading } = useSession();
     const insets = useSafeAreaInsets();
-
-    const { startOAuthFlow: startGoogleOAuthFlow } = useOAuth({ strategy: "oauth_google" });
-    const { startOAuthFlow: startAppleOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
+    const isSignedIn = Boolean(session?.session);
 
     // If already signed in, redirect to tabs
     useEffect(() => {
-        if (isAuthLoaded && isSignedIn) {
+        if (!isAuthLoading && isSignedIn) {
             router.replace("/(tabs)");
         }
-    }, [isAuthLoaded, isSignedIn, router]);
+    }, [isAuthLoading, isSignedIn, router]);
 
     const [isLogin, setIsLogin] = useState(true);
+    const isSignUp = !isLogin;
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [pendingVerification, setPendingVerification] = useState(false);
-    const [code, setCode] = useState("");
 
     const onSignInPress = async () => {
-        // Check if already signed in
         if (isSignedIn) {
             router.replace("/(tabs)");
             return;
         }
-        
-        if (!isSignInLoaded) {
+
+        if (isAuthLoading) {
             Alert.alert("Loading", "Please wait while we connect to our servers...");
             return;
         }
+
         if (!email || !password) {
             Alert.alert("Error", "Please enter your email and password");
             return;
         }
+
         try {
-            const completeSignIn = await signIn.create({
-                identifier: email,
+            const result = await signIn.email({
+                email,
                 password,
             });
-            await setSignInActive({ session: completeSignIn.createdSessionId });
-            router.replace("/(tabs)");
-        } catch (err: any) {
-            const errorMessage = err.errors?.[0]?.message || err.message || "";
-            
-            // Handle "session already exists" - means we're logged in
-            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
-                router.replace("/(tabs)");
+
+            if (result?.error) {
+                Alert.alert("Error", result.error.message || "Failed to sign in. Please try again.");
                 return;
             }
-            
+
+            router.replace("/(tabs)");
+        } catch (err: any) {
+            const errorMessage = err?.message || "Failed to sign in. Please try again.";
             Alert.alert("Error", errorMessage || "Failed to sign in. Please try again.");
         }
     };
 
     const onSignUpPress = async () => {
-        // Check if already signed in
         if (isSignedIn) {
             router.replace("/(tabs)");
             return;
         }
-        
-        if (!isSignUpLoaded) {
+
+        if (isAuthLoading) {
             Alert.alert("Loading", "Please wait while we connect to our servers...");
             return;
         }
+
         if (!email || !password) {
             Alert.alert("Error", "Please enter your email and password");
             return;
         }
+
         try {
-            await signUp.create({
-                emailAddress: email,
+            const result = await signUp.email({
+                email,
+                password,
+                name: email.split("@")[0] || "User",
+            });
+
+            if (result?.error) {
+                Alert.alert("Error", result.error.message || "Failed to sign up. Please try again.");
+                return;
+            }
+
+            const loginResult = await signIn.email({
+                email,
                 password,
             });
-            await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-            setPendingVerification(true);
-        } catch (err: any) {
-            const errorMessage = err.errors?.[0]?.message || err.message || "";
-            
-            // Handle "session already exists" - means we're logged in
-            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
-                router.replace("/(tabs)");
+
+            if (loginResult?.error) {
+                Alert.alert("Account created", "Please sign in with your new account.");
                 return;
             }
-            
-            Alert.alert("Error", errorMessage || "Failed to sign up. Please try again.");
-        }
-    };
 
-    const onPressVerify = async () => {
-        if (!isSignUpLoaded) return;
-        try {
-            const completeSignUp = await signUp.attemptEmailAddressVerification({
-                code,
-            });
-            await setSignUpActive({ session: completeSignUp.createdSessionId });
             router.replace("/(tabs)");
         } catch (err: any) {
-            const errorMessage = err.errors?.[0]?.message || err.message || "";
-            
-            // Handle "session already exists" - means we're logged in
-            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
-                router.replace("/(tabs)");
-                return;
-            }
-            
-            Alert.alert("Error", errorMessage || "Failed to verify. Please try again.");
+            const errorMessage = err?.message || "Failed to sign up. Please try again.";
+            Alert.alert("Error", errorMessage);
         }
     };
 
-    const onSelectOAuth = useCallback(async (strategy: "oauth_google" | "oauth_apple") => {
+    const onSelectOAuth = useCallback(async (provider: "google" | "apple") => {
         try {
-            // Check if already signed in
             if (isSignedIn) {
                 router.replace("/(tabs)");
                 return;
             }
 
-            const startOAuthFlow = strategy === "oauth_google" ? startGoogleOAuthFlow : startAppleOAuthFlow;
-            
-            // Don't pass redirectUrl - let Clerk handle it automatically
-            const { createdSessionId, setActive, signUp: _signUp, signIn: _signIn } = await startOAuthFlow();
+            const result = await signIn.social({
+                provider,
+                callbackURL: "/(tabs)",
+            });
 
-            if (createdSessionId) {
-                await setActive!({ session: createdSessionId });
+            if (!result?.error) {
                 router.replace("/(tabs)");
-            } else {
-                // Check if user got signed in during the flow
-                // This can happen if session already exists
-                if (isSignedIn) {
-                    router.replace("/(tabs)");
-                }
+                return;
             }
+
+            Alert.alert("Sign In Failed", result.error.message || "Failed to sign in. Please try again.");
+            return;
         } catch (err: any) {
             if (__DEV__) console.error("OAuth error", err);
-            
-            // Handle various error cases
-            const errorMessage = err.errors?.[0]?.message || err.message || "";
-            
-            // Session exists means we're actually logged in
-            if (errorMessage.toLowerCase().includes("session") && errorMessage.toLowerCase().includes("exist")) {
-                router.replace("/(tabs)");
-                return;
-            }
-            
-            // Redirect mismatch - likely a stale auth session, try again
-            if (errorMessage.toLowerCase().includes("redirect")) {
-                Alert.alert(
-                    "Please Try Again", 
-                    "There was an issue with the sign-in flow. Please try again."
-                );
-                return;
-            }
-            
+            const errorMessage = err?.message || "Failed to sign in. Please try again.";
             Alert.alert(
-                "Sign In Failed", 
+                "Sign In Failed",
                 errorMessage || "Failed to sign in. Please try again."
             );
         }
-    }, [startGoogleOAuthFlow, startAppleOAuthFlow, isSignedIn, router]);
+    }, [isSignedIn, router]);
 
     return (
         <View className="relative flex-1 w-full bg-[#121212] flex flex-col overflow-hidden">
@@ -189,6 +144,7 @@ export default function LoginSignup() {
                     source={{ uri: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop" }}
                     contentFit="cover"
                     className="w-full h-full scale-125 translate-x-12 -translate-y-8"
+                    // @ts-ignore
                     style={{ mixBlendMode: "screen" }}
                 />
                 <LinearGradient
@@ -215,9 +171,7 @@ export default function LoginSignup() {
                     Enter Your <Text className="italic text-[#C9A961]">Sanctuary</Text>
                 </Text>
 
-                {!pendingVerification ? (
-                    <>
-                        <View className="flex-row gap-12 mb-10 border-b border-[#2A2A2A] w-full max-w-[320px]">
+                <View className="flex-row gap-12 mb-10 border-b border-[#2A2A2A] w-full max-w-[320px]">
                             <TouchableOpacity onPress={() => setIsLogin(true)} className="pb-3 relative">
                                 <Text className={`font-sans text-xs uppercase tracking-[0.2em] font-medium ${isLogin ? 'text-[#E8E4DD]' : 'text-[#6B6B6B]'}`}>
                                     Login
@@ -225,13 +179,13 @@ export default function LoginSignup() {
                                 {isLogin && <View className="absolute bottom-0 left-0 right-0 h-[1px] bg-[#C9A961]" />}
                             </TouchableOpacity>
                             <TouchableOpacity onPress={() => setIsLogin(false)} className="pb-3 relative">
-                                <Text className={`font-sans text-xs uppercase tracking-[0.2em] font-medium ${!isLogin ? 'text-[#E8E4DD]' : 'text-[#6B6B6B]'}`}>
+                                <Text className={`font-sans text-xs uppercase tracking-[0.2em] font-medium ${isSignUp ? 'text-[#E8E4DD]' : 'text-[#6B6B6B]'}`}>
                                     Sign Up
                                 </Text>
-                                {!isLogin && <View className="absolute bottom-0 left-0 right-0 h-[1px] bg-[#C9A961]" />}
+                                {isSignUp && <View className="absolute bottom-0 left-0 right-0 h-[1px] bg-[#C9A961]" />}
                             </TouchableOpacity>
-                        </View>
-                        <View className="w-full max-w-[320px] space-y-6 gap-6">
+                </View>
+                <View className="w-full max-w-[320px] space-y-6 gap-6">
                             <View>
                                 <Text className="block font-sans text-[10px] uppercase tracking-[0.25em] text-[#9B9B9B] mb-3 font-light">
                                     Email
@@ -286,46 +240,19 @@ export default function LoginSignup() {
                             </View>
                             <View className="flex-row gap-4 justify-center">
                                 <TouchableOpacity
-                                    onPress={() => onSelectOAuth("oauth_google")}
+                                    onPress={() => onSelectOAuth("google")}
                                     className="w-12 h-12 border border-[#C9A961]/20 flex items-center justify-center"
                                 >
                                     <MaterialCommunityIcons name="google" size={20} color="#E8E4DD" />
                                 </TouchableOpacity>
                                 <TouchableOpacity
-                                    onPress={() => onSelectOAuth("oauth_apple")}
+                                    onPress={() => onSelectOAuth("apple")}
                                     className="w-12 h-12 border border-[#C9A961]/20 flex items-center justify-center"
                                 >
                                     <MaterialCommunityIcons name="apple" size={20} color="#E8E4DD" />
                                 </TouchableOpacity>
                             </View>
-                        </View>
-                    </>
-                ) : (
-                    <View className="w-full max-w-[320px] space-y-6 gap-6">
-                        <View>
-                            <Text className="block font-sans text-[10px] uppercase tracking-[0.25em] text-[#9B9B9B] mb-3 font-light">
-                                Verification Code
-                            </Text>
-                            <TextInput
-                                value={code}
-                                onChangeText={setCode}
-                                placeholder="123456"
-                                placeholderTextColor="#4A4A4A"
-                                className="w-full h-12 px-4 bg-transparent border border-[#C9A961]/20 text-[#E8E4DD] font-sans text-sm"
-                            />
-                        </View>
-                        <TouchableOpacity
-                            onPress={onPressVerify}
-                            className="group relative w-full h-12 flex items-center justify-center overflow-hidden active:scale-[0.98] mt-2"
-                        >
-                            <View className="absolute inset-0 bg-[#C9A961]/90" />
-                            <View className="absolute inset-0 border border-[#C9A961]/30" />
-                            <Text className="relative font-sans text-[#121212] font-semibold tracking-[0.15em] uppercase text-xs z-10">
-                                Verify Email
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-                )}
+                </View>
             </View>
             <View className="relative z-20 px-6 pb-6 pt-4 flex-row justify-center gap-6">
                 <TouchableOpacity>

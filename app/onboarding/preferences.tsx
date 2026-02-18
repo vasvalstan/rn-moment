@@ -1,10 +1,11 @@
-import { View, Text, TouchableOpacity } from "react-native";
+import { View, Text, TouchableOpacity, Alert } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useOnboarding } from "../../context/OnboardingContext";
 import { useState } from "react";
+import { requestNotificationPermissions, scheduleDailyReminder } from "../../utils/notifications";
 
 export default function OnboardingPreferences() {
     const router = useRouter();
@@ -12,9 +13,33 @@ export default function OnboardingPreferences() {
 
     const [sessionLength, setSessionLength] = useState(20);
     const [practiceTime, setPracticeTime] = useState("morning");
-    const [reminders, setReminders] = useState(true);
+    const [reminders, setReminders] = useState(false);
 
-    const handleComplete = () => {
+    const toggleReminders = async () => {
+        const nextValue = !reminders;
+        if (nextValue) {
+            const granted = await requestNotificationPermissions();
+            if (!granted) {
+                Alert.alert(
+                    "Permissions Required",
+                    "Please enable notifications in your settings to receive daily reminders."
+                );
+                return;
+            }
+        }
+        setReminders(nextValue);
+    };
+
+    const handleComplete = async () => {
+        if (reminders) {
+            // Map practiceTime to hours
+            let hour = 8; // Default morning
+            if (practiceTime === "afternoon") hour = 14;
+            if (practiceTime === "evening") hour = 20;
+            
+            await scheduleDailyReminder(hour, 0);
+        }
+        
         updateData({ sessionLength, practiceTime, reminders });
         router.push("/login-signup");
     };
@@ -33,12 +58,7 @@ export default function OnboardingPreferences() {
                     className="absolute inset-0"
                 />
             </View>
-            <View className="relative z-10 w-full pt-14 px-6 flex justify-center items-center">
-                <Text className="font-mono text-xs tracking-[0.2em] text-[#9B9B9B]">
-                    05 / 05
-                </Text>
-            </View>
-            <View className="flex-1 flex flex-col relative z-10 px-6 pt-8">
+            <View className="flex-1 flex flex-col relative z-10 px-6 pt-20">
                 <View className="text-center mb-10">
                     <Text className="font-heading text-4xl leading-[1.15] tracking-tight italic text-white text-center">
                         Personalize your{"\n"}
@@ -90,10 +110,16 @@ export default function OnboardingPreferences() {
                             Daily reminder?
                         </Text>
                         <TouchableOpacity
-                            onPress={() => setReminders(!reminders)}
+                            onPress={toggleReminders}
+                            activeOpacity={0.8}
                             className={`relative w-14 h-7 rounded-full ${reminders ? 'bg-[#C9A961]' : 'bg-[#2A2A2A]'}`}
                         >
-                            <View className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm transition-all ${reminders ? 'right-0.5' : 'left-0.5'}`} />
+                            <View 
+                                className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-sm ${reminders ? 'right-0.5' : 'left-0.5'}`} 
+                                style={{
+                                    transform: [{ translateX: 0 }] // Force re-render if needed
+                                }}
+                            />
                         </TouchableOpacity>
                     </View>
                 </View>

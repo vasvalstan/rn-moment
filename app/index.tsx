@@ -1,8 +1,9 @@
 import { Redirect } from "expo-router";
-import { useAuth } from "@clerk/clerk-expo";
+import { useSession } from "@/lib/auth-client";
 
 export default function Index() {
-  const { isSignedIn } = useAuth();
+  const { data: session } = useSession();
+  const isSignedIn = Boolean(session?.session);
 
   if (isSignedIn) {
     return <Redirect href="/(tabs)" />;

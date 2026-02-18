@@ -63,7 +63,7 @@ export const CircularProgress: React.FC<CircularProgressProps> = memo(
       } else {
         progressValue.value = clampedProgress;
       }
-    }, [progress, animated, animationDuration]);
+    }, [progress, animated, animationDuration, progressValue]);
 
     const animatedCircleProps = useAnimatedProps(() => {
       const strokeDashoffset =
@@ -126,6 +126,9 @@ export const CircularProgress: React.FC<CircularProgressProps> = memo(
     return content;
   }
 );
+
+
+CircularProgress.displayName = "CircularProgress";
 
 const styles = StyleSheet.create({
   innerCircle: {

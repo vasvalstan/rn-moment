@@ -76,12 +76,7 @@ export default function OnboardingExperience() {
                 colors={["#1a1a1a", "#121212"]}
                 className="absolute top-0 left-0 w-full h-[60vh] opacity-50 z-0 pointer-events-none"
             />
-            <View className="relative z-10 w-full pt-14 px-6 flex justify-center items-center">
-                <Text className="font-mono text-xs tracking-[0.2em] text-[#6B6B6B]">
-                    04 / 05
-                </Text>
-            </View>
-            <ScrollView className="flex-1 relative z-10">
+            <ScrollView className="flex-1 relative z-10" contentContainerStyle={{ paddingTop: 40 }}>
                 <View className="px-8 pt-12 pb-8 flex flex-col text-center space-y-4">
                     <Text className="font-heading text-4xl leading-[1.15] tracking-tight text-[#E8E4DD] text-center">
                         How familiar are you with{"\n"}
@@ -167,15 +162,12 @@ export default function OnboardingExperience() {
                     className={`group relative w-full h-14 flex items-center justify-center overflow-hidden active:scale-[0.98] ${selectedExperience ? '' : 'opacity-40'}`}
                     disabled={!selectedExperience}
                 >
-                    <View className="absolute inset-0 border border-[#9B9B9B]/40 rounded-[4px]" />
-                    <LinearGradient
-                        colors={selectedExperience ? ["#C9A961", "#A08648"] : ["#B8B8B8", "#909090"]}
-                        className="absolute inset-[1px] rounded-[3px] flex items-center justify-center"
-                    >
+                    <View className="absolute inset-0 border border-[#C9A961]/30 rounded-[4px]" />
+                    <View className="absolute inset-[1px] bg-[#C9A961] rounded-[3px] flex items-center justify-center">
                         <Text className="font-sans text-[#121212] font-semibold tracking-[0.15em] uppercase text-xs">
                             Continue
                         </Text>
-                    </LinearGradient>
+                    </View>
                 </TouchableOpacity>
             </View>
         </View>

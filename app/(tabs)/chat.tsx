@@ -49,21 +49,20 @@ export default function ChatScreen() {
 
   // Load today's conversation on mount
   useEffect(() => {
+    const loadConversation = async () => {
+      try {
+        setIsLoading(true);
+        const result = await getOrCreateConversation();
+        setConversation(result.conversation as Conversation);
+        setMessages(result.messages as ChatMessage[]);
+      } catch (error) {
+        console.error("Failed to load conversation:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
     loadConversation();
-  }, []);
-
-  const loadConversation = async () => {
-    try {
-      setIsLoading(true);
-      const result = await getOrCreateConversation();
-      setConversation(result.conversation as Conversation);
-      setMessages(result.messages as ChatMessage[]);
-    } catch (error) {
-      console.error("Failed to load conversation:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [getOrCreateConversation]);
 
   const handleSend = useCallback(async () => {
     if (!inputText.trim() || !conversation || isSending) return;
@@ -242,7 +241,7 @@ export default function ChatScreen() {
             {/* Topic banner */}
             <View className="bg-[#161616] border border-[#282828] rounded-lg p-5 mb-4">
               <Text className="text-[9px] uppercase tracking-[0.25em] text-[#DBC188] mb-2 font-sans">
-                Today's Topic
+                Today&apos;s Topic
               </Text>
               <Text className="text-lg font-heading text-[#ECECEC] mb-2">
                 {conversation?.topic || todaysTopic.topic}

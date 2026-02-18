@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, Animated, Easing, Alert, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, Animated, Easing } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { StatusBar } from "expo-status-bar";
@@ -10,7 +10,6 @@ import { useFaceDownDetection } from "../hooks/useFaceDownDetection";
 import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
 import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAuth } from "@clerk/clerk-expo";
 
 type SessionState = 
     | "waiting"     // Waiting for phone to be placed face-down
@@ -25,7 +24,6 @@ export default function MeditationSession() {
     const params = useLocalSearchParams<{ duration: string }>();
     const targetDuration = parseInt(params.duration || "1200", 10); // Default 20 mins in seconds
     const { isAuthenticated, isLoading: isAuthLoading } = useConvexAuth();
-    const { isSignedIn, isLoaded: isClerkLoaded, getToken } = useAuth();
 
     // Session state
     const [sessionState, setSessionState] = useState<SessionState>("waiting");
@@ -33,10 +31,10 @@ export default function MeditationSession() {
     const [interruptions, setInterruptions] = useState(0);
     const [sessionId, setSessionId] = useState<Id<"sessions"> | null>(null);
     const [sensorReady, setSensorReady] = useState(false);
-    const [authError, setAuthError] = useState(false);
+    const [authError] = useState(false);
 
     // Refs for timer
-    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const startTimeRef = useRef<number>(0);
     const sessionStateRef = useRef<SessionState>("waiting");
 
@@ -55,6 +53,42 @@ export default function MeditationSession() {
     const completeSession = useMutation(api.sessions.completeSession);
     const cancelSession = useMutation(api.sessions.cancelSession);
 
+    // Define handleSessionStart first as it's used in callbacks
+    const handleSessionStart = useCallback(async () => {
+        // If still loading auth, wait a moment and retry
+        if (isAuthLoading) {
+            if (__DEV__) console.log("Convex auth still loading, waiting...");
+            return;
+        }
+        
+        // Try to start session with Convex (will work if authenticated)
+        // Only try Convex if authenticated, otherwise just run locally
+        if (isAuthenticated) {
+            try {
+                const id = await startSession({ targetDuration });
+                if (__DEV__) console.log("Session started with ID:", id);
+                setSessionId(id);
+            } catch (error: any) {
+                if (__DEV__) console.log("Failed to save to Convex, continuing locally:", error.message);
+            }
+        } else {
+            if (__DEV__) console.log("Running session locally (not authenticated with Convex)");
+        }
+        
+        // Always start the session locally - meditation works regardless of auth
+        setSessionState("active");
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }, [isAuthLoading, isAuthenticated, startSession, targetDuration]);
+
+    const handlePause = useCallback(() => {
+        setSessionState("paused");
+        setInterruptions((prev) => prev + 1);
+    }, []);
+
+    const handleResume = useCallback(() => {
+        setSessionState("active");
+    }, []);
+
     // Face-down detection with callbacks that check current state
     const handleFaceDown = useCallback(() => {
         if (sessionStateRef.current === "waiting") {
@@ -62,20 +96,81 @@ export default function MeditationSession() {
         } else if (sessionStateRef.current === "paused") {
             handleResume();
         }
-    }, []);
+    }, [handleSessionStart, handleResume]);
 
     const handlePickedUp = useCallback(() => {
         if (sessionStateRef.current === "active") {
             handlePause();
         }
-    }, []);
+    }, [handlePause]);
 
-    const { isFaceDown, isListening, startListening, stopListening, isAvailable, sensorData } = 
+    const { isListening, startListening, stopListening, isAvailable, sensorData } = 
         useFaceDownDetection({
             hapticFeedback: true,
             onFaceDown: handleFaceDown,
             onPickedUp: handlePickedUp,
         });
+
+    const handleSessionComplete = useCallback(async () => {
+        if (sessionStateRef.current === "completed") return;
+        
+        setSessionState("completed");
+        stopListening();
+        
+        // Strong haptic feedback for completion
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        setTimeout(() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+        }, 200);
+
+        if (sessionId) {
+            try {
+                await completeSession({
+                    sessionId,
+                    actualDuration: elapsedTime,
+                    interruptions,
+                });
+                if (__DEV__) console.log("Session completed and saved to Convex");
+            } catch (error) {
+                if (__DEV__) console.error("Failed to save session completion:", error);
+                // Session still completed locally, just not tracked
+            }
+        } else {
+            if (__DEV__) console.log("Session completed locally (not tracked)");
+        }
+    }, [sessionId, elapsedTime, interruptions, completeSession, stopListening]);
+
+    const handleCancel = async () => {
+        setSessionState("cancelled");
+        stopListening();
+        
+        if (sessionId) {
+            try {
+                await cancelSession({
+                    sessionId,
+                    actualDuration: elapsedTime,
+                    interruptions,
+                });
+                if (__DEV__) console.log("Session cancelled and saved to Convex");
+            } catch (error) {
+                if (__DEV__) console.error("Failed to save session cancellation:", error);
+                // Continue anyway - session is cancelled locally
+            }
+        } else {
+            if (__DEV__) console.log("Session cancelled locally (was not tracked)");
+        }
+        
+        router.back();
+    };
+
+    const handleManualStart = () => {
+        // Fallback for when sensor isn't available
+        handleSessionStart();
+    };
+
+    const handleDone = () => {
+        router.back();
+    };
 
     // Phone flip animation
     useEffect(() => {
@@ -167,7 +262,12 @@ export default function MeditationSession() {
                 clearInterval(timerRef.current);
             }
         };
-    }, []);
+    }, [startListening, stopListening]);
+
+    const handleSessionCompleteRef = useRef(handleSessionComplete);
+    useEffect(() => {
+        handleSessionCompleteRef.current = handleSessionComplete;
+    }, [handleSessionComplete]);
 
     // Timer effect
     useEffect(() => {
@@ -180,7 +280,7 @@ export default function MeditationSession() {
 
                 // Check if session is complete
                 if (elapsed >= targetDuration) {
-                    handleSessionComplete();
+                    handleSessionCompleteRef.current();
                 }
             }, 100);
         } else {
@@ -195,126 +295,12 @@ export default function MeditationSession() {
                 clearInterval(timerRef.current);
             }
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [sessionState, targetDuration]);
 
-    const handleSessionStart = async () => {
-        if (__DEV__) console.log("Starting session - Clerk loaded:", isClerkLoaded, "Clerk signed in:", isSignedIn, "Convex auth loading:", isAuthLoading, "Convex authenticated:", isAuthenticated);
-        
-        // Wait for Clerk to finish loading
-        if (!isClerkLoaded) {
-            if (__DEV__) console.log("Clerk still loading, waiting...");
-            setTimeout(() => handleSessionStart(), 500);
-            return;
-        }
-        
-        // If Clerk says we're signed in but Convex doesn't know yet, try to refresh token
-        if (isSignedIn && !isAuthenticated && !isAuthLoading) {
-            if (__DEV__) console.log("Clerk signed in but Convex not authenticated - trying to get token...");
-            try {
-                const token = await getToken({ template: "convex" });
-                if (__DEV__) console.log("Got Convex token:", token ? "yes" : "no");
-                // Wait a moment for Convex to sync
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            } catch (e) {
-                if (__DEV__) console.log("Failed to get Convex token:", e);
-            }
-        }
-        
-        // If still loading auth, wait a moment and retry
-        if (isAuthLoading) {
-            if (__DEV__) console.log("Convex auth still loading, waiting...");
-            setTimeout(() => handleSessionStart(), 500);
-            return;
-        }
-        
-        // Try to start session with Convex (will work if authenticated)
-        // Only try Convex if authenticated, otherwise just run locally
-        if (isAuthenticated) {
-            try {
-                const id = await startSession({ targetDuration });
-                if (__DEV__) console.log("Session started with ID:", id);
-                setSessionId(id);
-            } catch (error: any) {
-                if (__DEV__) console.log("Failed to save to Convex, continuing locally:", error.message);
-            }
-        } else {
-            if (__DEV__) console.log("Running session locally (not authenticated with Convex)");
-        }
-        
-        // Always start the session locally - meditation works regardless of auth
-        setSessionState("active");
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    };
+    // handleSessionStart moved up
 
-    const handlePause = () => {
-        setSessionState("paused");
-        setInterruptions((prev) => prev + 1);
-    };
 
-    const handleResume = () => {
-        setSessionState("active");
-    };
-
-    const handleSessionComplete = useCallback(async () => {
-        if (sessionStateRef.current === "completed") return;
-        
-        setSessionState("completed");
-        stopListening();
-        
-        // Strong haptic feedback for completion
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        setTimeout(() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-        }, 200);
-
-        if (sessionId) {
-            try {
-                await completeSession({
-                    sessionId,
-                    actualDuration: elapsedTime,
-                    interruptions,
-                });
-                if (__DEV__) console.log("Session completed and saved to Convex");
-            } catch (error) {
-                if (__DEV__) console.error("Failed to save session completion:", error);
-                // Session still completed locally, just not tracked
-            }
-        } else {
-            if (__DEV__) console.log("Session completed locally (not tracked)");
-        }
-    }, [sessionId, elapsedTime, interruptions, completeSession, stopListening]);
-
-    const handleCancel = async () => {
-        setSessionState("cancelled");
-        stopListening();
-        
-        if (sessionId) {
-            try {
-                await cancelSession({
-                    sessionId,
-                    actualDuration: elapsedTime,
-                    interruptions,
-                });
-                if (__DEV__) console.log("Session cancelled and saved to Convex");
-            } catch (error) {
-                if (__DEV__) console.error("Failed to save session cancellation:", error);
-                // Continue anyway - session is cancelled locally
-            }
-        } else {
-            if (__DEV__) console.log("Session cancelled locally (was not tracked)");
-        }
-        
-        router.back();
-    };
-
-    const handleManualStart = () => {
-        // Fallback for when sensor isn't available
-        handleSessionStart();
-    };
-
-    const handleDone = () => {
-        router.back();
-    };
 
     // Format time as MM:SS
     const formatTime = (seconds: number) => {

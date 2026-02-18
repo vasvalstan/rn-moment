@@ -8,9 +8,9 @@ import { api } from "@/convex/_generated/api";
 import { useEffect } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useOnboarding } from "../../context/OnboardingContext";
-import { useUser } from "@clerk/clerk-expo";
 import { FadeText } from "@/components/FadeText";
 import { CircularProgress } from "@/components/CircularProgress";
+import { useSession } from "@/lib/auth-client";
 
 export default function Home() {
     const router = useRouter();
@@ -18,22 +18,13 @@ export default function Home() {
     const createUser = useMutation(api.users.createUser);
     const insets = useSafeAreaInsets();
     const { data: onboardingData } = useOnboarding();
-    const { user: clerkUser } = useUser();
+    const { data: session } = useSession();
 
     useEffect(() => {
-        // If user is authenticated and not in database yet, create user profile
-        // with data from Clerk and onboarding
-        if (user === null && clerkUser) {
-            // Get user's name from Clerk
-            const userName = clerkUser.fullName || 
-                           `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || 
-                           "User";
-            
-            // Get primary email from Clerk
-            const userEmail = clerkUser.emailAddresses?.[0]?.emailAddress || "";
-            
-            // Get profile picture URL from Clerk
-            const pictureUrl = clerkUser.imageUrl || "";
+        if (user === null && session?.user) {
+            const userName = session.user.name?.trim() || "User";
+            const userEmail = session.user.email || "";
+            const pictureUrl = session.user.image || "";
 
             createUser({
                 name: userName,
@@ -48,7 +39,7 @@ export default function Home() {
                 reminders: onboardingData.reminders,
             }).catch((err) => console.log("Error creating user:", err));
         }
-    }, [user, clerkUser, createUser, onboardingData]);
+    }, [user, session, createUser, onboardingData]);
 
     const currentDate = new Date();
     const dayName = currentDate.toLocaleDateString("en-US", { weekday: "long" });

@@ -37,12 +37,7 @@ export default function OnboardingPurpose() {
                 colors={["#1a1a1a", "#121212"]}
                 className="absolute top-0 left-0 w-full h-[60vh] opacity-50 z-0 pointer-events-none"
             />
-            <View className="relative z-10 w-full pt-14 px-6 flex justify-center items-center">
-                <Text className="font-mono text-xs tracking-[0.2em] text-[#6B6B6B]">
-                    02 / 05
-                </Text>
-            </View>
-            <View className="flex-1 flex flex-col relative z-10 px-6 pt-12 pb-6">
+            <View className="flex-1 flex flex-col relative z-10 px-6 pt-24 pb-6">
                 <View className="mb-10">
                     <Text className="font-heading text-[42px] leading-[1.15] tracking-tight text-[#E8E4DD] mb-3">
                         What brings you{"\n"}

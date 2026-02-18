@@ -36,7 +36,7 @@ export const TypewriterText: React.FC<TypewriterTextProps> = memo(
     );
     const opacity = useSharedValue(animate ? 0 : 1);
     const words = text.split(" ");
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     useEffect(() => {
       if (!animate) {
@@ -64,7 +64,7 @@ export const TypewriterText: React.FC<TypewriterTextProps> = memo(
       return () => {
         if (intervalRef.current) clearInterval(intervalRef.current);
       };
-    }, [text, animate]);
+    }, [text, animate, wordDelay, words.length, onComplete, opacity]);
 
     const containerStyle = useAnimatedStyle(() => ({
       opacity: opacity.value,
@@ -81,3 +81,5 @@ export const TypewriterText: React.FC<TypewriterTextProps> = memo(
     );
   }
 );
+
+TypewriterText.displayName = "TypewriterText";

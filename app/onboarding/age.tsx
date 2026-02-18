@@ -24,12 +24,7 @@ export default function OnboardingAge() {
                 colors={["#1a1a1a", "#121212"]}
                 className="absolute top-0 left-0 w-full h-[60vh] opacity-50 z-0 pointer-events-none"
             />
-            <View className="relative z-10 w-full pt-14 px-6 flex justify-center items-center">
-                <Text className="font-mono text-xs tracking-[0.2em] text-[#6B6B6B]">
-                    03 / 05
-                </Text>
-            </View>
-            <View className="flex-1 flex flex-col relative z-10 px-8 pt-16">
+            <View className="flex-1 flex flex-col relative z-10 px-8 pt-28">
                 <View className="text-center mb-16">
                     <Text className="font-heading text-5xl leading-[1.1] tracking-tight text-[#E8E4DD] text-center">
                         What&apos;s your{"\n"}

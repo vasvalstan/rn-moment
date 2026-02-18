@@ -1,16 +1,16 @@
 import { Tabs, Redirect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import { useAuth } from "@clerk/clerk-expo";
 import { View, ActivityIndicator, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useSession } from "@/lib/auth-client";
 
 export default function TabLayout() {
-    const { isSignedIn, isLoaded } = useAuth();
+    const { data: session, isPending } = useSession();
     const insets = useSafeAreaInsets();
     const isAndroid = Platform.OS === "android";
+    const isSignedIn = Boolean(session?.session);
 
-    // Show loading while Clerk is initializing
-    if (!isLoaded) {
+    if (isPending) {
         return (
             <View className="flex-1 bg-[#121212] items-center justify-center">
                 <ActivityIndicator size="large" color="#C9A961" />
@@ -18,7 +18,6 @@ export default function TabLayout() {
         );
     }
 
-    // Redirect to login if not authenticated
     if (!isSignedIn) {
         return <Redirect href="/login-signup" />;
     }

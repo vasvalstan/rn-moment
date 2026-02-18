@@ -1,15 +1,30 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { useAuth } from "@clerk/clerk-expo";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { signOut } from "@/lib/auth-client";
 
 export default function Profile() {
     const router = useRouter();
-    const { signOut } = useAuth();
     const insets = useSafeAreaInsets();
+    const user = useQuery(api.users.getUser);
+    const stats = useQuery(api.stats.getUserStats);
+
+    const isLoading = user === undefined || stats === undefined;
+    const profileName = user?.name?.trim() || "Your Profile";
+    const profileImage =
+        user?.pictureUrl?.trim() || "https://randomuser.me/api/portraits/women/67.jpg";
+    const currentStreak = stats?.currentStreak ?? 0;
+    const longestStreak = stats?.longestStreak ?? 0;
+    const totalSessions = stats?.totalSessions ?? 0;
+    const totalHours = ((stats?.totalTime ?? 0) / 60).toFixed(1);
+    const memberLabel = user?.experience
+        ? `${user.experience} Practice`
+        : "Mindfulness Member";
 
     const onSignOutPress = async () => {
         try {
@@ -65,7 +80,7 @@ export default function Profile() {
                         <View className="relative">
                             <View className="w-28 h-28 rounded-full border border-[#8A8A8A]/40 overflow-hidden bg-[#1A1A1A]">
                                 <Image
-                                    source={{ uri: "https://randomuser.me/api/portraits/women/67.jpg" }}
+                                    source={{ uri: profileImage }}
                                     contentFit="cover"
                                     className="w-full h-full"
                                 />
@@ -73,20 +88,28 @@ export default function Profile() {
                         </View>
                     </View>
                     <View className="mt-2">
-                        <Text className="font-heading text-4xl text-[#ECECEC] mb-1">Olivia Sterling</Text>
+                        <Text className="font-heading text-4xl text-[#ECECEC] mb-1">{profileName}</Text>
                         <Text className="text-[10px] uppercase tracking-[0.3em] text-[#DBC188] font-sans">
-                            Premium Member
+                            {memberLabel}
                         </Text>
+                        {isLoading && (
+                            <View className="flex-row items-center gap-2 mt-3">
+                                <ActivityIndicator size="small" color="#DBC188" />
+                                <Text className="text-[10px] uppercase tracking-[0.22em] text-[#8A8A8A] font-sans">
+                                    Syncing profile
+                                </Text>
+                            </View>
+                        )}
                     </View>
                 </View>
 
                 <View className="flex-row flex-wrap gap-4">
                     <View className="w-[47%] bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2px] p-5 flex-col">
                         <Text className="text-[10px] uppercase tracking-[0.25em] text-[#8A8A8A] mb-3 font-sans">
-                            Days Practicing
+                            Current Streak
                         </Text>
                         <Text className="font-sans text-5xl font-light tracking-tighter text-[#C0C0C0]">
-                            287
+                            {currentStreak}
                         </Text>
                     </View>
                     <View className="w-[47%] bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2px] p-5 flex-col">
@@ -94,22 +117,27 @@ export default function Profile() {
                             Total Sessions
                         </Text>
                         <Text className="font-sans text-5xl font-light tracking-tighter text-[#C0C0C0]">
-                            1,453
+                            {totalSessions}
                         </Text>
                     </View>
                     <View className="w-[47%] bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2px] p-5 flex-col">
                         <Text className="text-[10px] uppercase tracking-[0.25em] text-[#8A8A8A] mb-3 font-sans">
-                            Current Streak
+                            Longest Streak
                         </Text>
                         <Text className="font-sans text-5xl font-light tracking-tighter text-[#C0C0C0]">
-                            42
+                            {longestStreak}
                         </Text>
                     </View>
                     <View className="w-[47%] bg-white/5 backdrop-blur-sm border border-white/10 rounded-[2px] p-5 flex-col">
                         <Text className="text-[10px] uppercase tracking-[0.25em] text-[#8A8A8A] mb-3 font-sans">
-                            Favorite Practice
+                            Total Time
                         </Text>
-                        <Text className="font-heading text-xl text-[#ECECEC] mt-2">Breathwork</Text>
+                        <View className="flex-row items-baseline gap-1 mt-1">
+                            <Text className="font-sans text-4xl font-light tracking-tight text-[#ECECEC]">
+                                {totalHours}
+                            </Text>
+                            <Text className="text-xs tracking-widest text-[#8A8A8A] font-sans">HRS</Text>
+                        </View>
                     </View>
                 </View>
 
@@ -125,8 +153,8 @@ export default function Profile() {
                             { icon: "star", color: "#9CAF88", label: "Dedicated" },
                             { icon: "heart", color: "#9CAF88", label: "Self-Care" },
                             { icon: "sunny", color: "#DBC188", label: "Early Riser" },
-                        ].map((item, index) => (
-                            <View key={index} className="w-[30%] bg-[#161616] border border-[#333333] rounded-[2px] p-5 flex-col items-center">
+                        ].map((item) => (
+                            <View key={item.label} className="w-[30%] bg-[#161616] border border-[#333333] rounded-[2px] p-5 flex-col items-center">
                                 <View className="w-12 h-12 flex items-center justify-center mb-3">
                                     <Ionicons name={item.icon as any} size={32} color={item.color} />
                                 </View>
